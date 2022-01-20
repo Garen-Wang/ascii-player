@@ -1,18 +1,25 @@
 import time
 import os
 import cv2
+import shutil
+import playsound
+import threading
+
 
 size = os.get_terminal_size()
 height, width = size.lines, size.columns
 
-# foreground color
-colored = lambda r, g, b, text: f"\033[38;2;{r};{g};{b};0m{text}"
-
-candidate_chars = ".,:;1ijlkr3HS98B#&@"
+candidate_chars = "*^.,:;(!)1@$#"
 
 def generate_frames(filename):
     vidcap = cv2.VideoCapture(filename)
     success, image = vidcap.read()
+    if os.path.exists("rframes"):
+        shutil.rmtree("rframes")
+    if os.path.exists("gframes"):
+        shutil.rmtree("gframes")
+    os.mkdir("rframes")
+    os.mkdir("gframes")
 
     count = 0
     while success:
@@ -26,9 +33,13 @@ def generate_frames(filename):
     return count
 
 
-def play1():
-    n = len(os.listdir("frames"))
-    for i in range(n):
+def play():
+    t = threading.Thread(target=lambda: playsound.playsound('./神女劈观.m4a', block=False))
+    t.start()
+    print("\033[?25l", end="")
+    n = len(os.listdir("rframes"))
+    n = 4800
+    for i in range(0, n):
         print("\033[1;1H", end="")
         filename = "frame%d.jpg" % i
         pre_time = time.time()
@@ -57,16 +68,15 @@ def play1():
                 # print("\033[38;2;{};{};{}m{}\033[38;2;0;0;0m".format(r, g, b, ch), end="")
                 temp = "\033[38;2;{};{};{}m{}\033[38;2;0;0;0m".format(r, g, b, ch)
                 buf += temp
-                # if len(buf) >= 1000:
-                #     print(buf, end="")
-                #     buf = ""
         print(buf, end="", flush=True)
         used_time = time.time() - pre_time
         if used_time < 0.033:
             time.sleep(0.033 - used_time)
-    pass
+    print("\033[2J")
+    print("\033[?25h", end="")
+    t.join()
 
 if __name__ == '__main__':
-    # n = generate_frames("神女劈观.mp4")
-    play1()
-    pass
+    # generate_frames("神女劈观.mp4")
+    play()
+
